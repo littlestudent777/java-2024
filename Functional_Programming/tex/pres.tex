@@ -1,0 +1,176 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage{xltxtra}
+\usepackage[main=russian,english]{babel}
+\usepackage{minted}
+\setbeamercolor{itemize item}{fg=black}
+\setbeamercolor{itemize subitem}{fg=black}
+\setbeamercolor{alerted text}{fg=black}
+\setbeamertemplate{itemize items}{\textbullet}% отключает кошмарные синие треугольники
+\setbeamerfont*{itemize/enumerate subbody}{parent=itemize/enumerate body}
+\setbeamerfont*{itemize/enumerate subsubbody}{parent=itemize/enumerate subbody}
+\setbeamerfont{alerted text}{series=\bfseries}
+
+\setmainfont{Arial}
+\setromanfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Courier New}
+
+\date{}
+
+\title{Применение функционального стиля в языке Java}
+
+\author{Бухаров Марк \\ Крупица Сергей}
+
+\begin{document}
+
+\begin{frame} 
+	\titlepage
+\end{frame}
+
+\begin{frame}{Содержание}
+	\begin{itemize}
+		\item Что такое функциональное программирование
+		\item Пример: функция \texttt{intToString}
+		\item Пример: работа с коллекциями 
+		\item Пример: использование функции-предиката
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Что такое функциональное программирование (ФП)}
+	Основная концепция ФП - всё есть математические функции
+	\[ f: A \rightarrow B \]
+	Метод становится математической функцией, если:
+	\begin{enumerate}
+		\item Он ссылочно прозрачен (referentially transparent)
+		\item Сигнатура метода является "честной"
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: честность сигнатуры метода}
+	\begin{minted}{java}
+public int Divide(int x, int y)
+{
+    return x / y;
+}
+	\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: честность сигнатуры метода}
+	\begin{minted}{java}
+public static int Divide(int x, NonZeroInteger y)
+{
+    return x / y.Value;
+}
+	\end{minted}
+\end{frame}
+
+
+\begin{frame}[fragile]{Функции в Java с помощью анонимных классов}
+	\begin{minted}{java}
+
+public interface Function<F, T> {
+   T apply(F from);
+}
+	\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: функция \texttt{intToString}}
+	\begin{minted}[fontsize=\footnotesize]{java}
+Function <Integer, String> intToString = 
+new Function<Integer, String>() {
+   @Override
+   public String apply(Integer from) {
+   return from.toString();
+   }
+};
+
+	\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: работа с коллекциями}
+	Хотим объединить числа в строку с разделителем. Нефункциональное решение:
+	\begin{minted}[fontsize=\footnotesize]{java}
+public String joinNumbers(Collection<Integer> numbers) {
+   StringBuilder result = new StringBuilder();
+   boolean first = true;
+   for (Integer number : numbers) {
+      if (first)
+         first = false;
+      else
+         result.append(", ");
+      result.append(number);
+   }
+   return result;
+}
+	\end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]{Пример: работа с коллекциями}
+	\begin{minted}[fontsize=\footnotesize]{java}
+public static <F, T> List<T>
+map(Collection<F> from, Function<F, T> transformer) {
+   ArrayList<T> result = new ArrayList<T>();
+   for (F element : from) //к каждому элементу коллекции применяем transformer
+      result.add(transformer.apply(element));
+   return result;
+}
+
+public static <T> String join(Collection<T> from, String separator) {
+   StringBuilder result = new StringBuilder();
+   boolean first = true;
+   for (T element : from) { //конкатенация в строку
+      if (first)
+         first = false;
+      else
+         result.append(separator);
+      result.append(element);
+   }
+   return result.toString();
+}
+	\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: работа с коллекциями}
+	\begin{minted}{java}
+public String joinNumbers(Collection<Integer> numbers) {
+   return join(map(numbers, intToString), ", ");
+}
+	\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: использование функции-предиката}
+	\begin{minted}{java}
+public interface Predicate<T> {
+   boolean test(T t);
+}
+
+public static <T> ArrayList<T> 
+filter(Collection<T> from, Predicate<T> check) {
+   ArrayList<T> result = new ArrayList<T>();
+   for (T element : from) {
+      if (check.test(element))
+         result.add(element);
+   }
+   return result;
+}
+	\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Пример: использование функции-предиката}
+	\begin{minted}{java}
+static Predicate<Integer> is_odd = new Predicate<Integer>() { 
+   @Override
+   public boolean test(Integer t) {
+      return (t % 2 != 0);
+   }
+};
+
+public static ArrayList<Integer> 
+filterOddNumbers(ArrayList<Integer> numbers) {
+   return filter(numbers, is_odd);
+}
+	\end{minted}
+\end{frame}
+
+\end{document}
